@@ -1,9 +1,9 @@
 // Variables for storing the calculator operation
 let firstNumber = '';
 let operator = '';
-let secondNumber = '';
 let displayValue = '0';
 let newNumberFlag = false;
+let lastButtonWasOperator = false;
 
 // Basic math functions
 function add(a, b) {
@@ -20,30 +20,47 @@ function multiply(a, b) {
 
 function divide(a, b) {
     if (b === 0) {
-        return "Error: Cannot divide by zero";
+        return "Nice try! 🙄";
     }
     return Number(a) / Number(b);
 }
 
+// Function to round long decimal numbers
+function roundResult(number) {
+    if (typeof number === 'string') return number; // For error messages
+    const maxDigits = 12; // Adjust based on your display width
+    return Number(number.toFixed(maxDigits)).toString();
+}
+
 // Function to perform the calculation based on the operator
 function operate(operator, a, b) {
+    let result;
     switch(operator) {
         case '+':
-            return add(a, b);
+            result = add(a, b);
+            break;
         case '-':
-            return subtract(a, b);
+            result = subtract(a, b);
+            break;
         case '*':
-            return multiply(a, b);
+            result = multiply(a, b);
+            break;
         case '/':
-            return divide(a, b);
+            result = divide(a, b);
+            break;
         default:
             return "Error: Invalid operator";
     }
+    return roundResult(result);
 }
 
 // Function to update the display
 function updateDisplay() {
     const display = document.querySelector('.display');
+    // Ensure display value doesn't overflow
+    if (displayValue.length > 12) {
+        displayValue = Number(displayValue).toExponential(6);
+    }
     display.textContent = displayValue;
 }
 
@@ -53,8 +70,11 @@ function inputDigit(digit) {
         displayValue = digit;
         newNumberFlag = false;
     } else {
+        // Prevent numbers from becoming too long
+        if (displayValue.replace('.', '').length >= 12) return;
         displayValue = displayValue === '0' ? digit : displayValue + digit;
     }
+    lastButtonWasOperator = false;
     updateDisplay();
 }
 
@@ -62,33 +82,56 @@ function inputDigit(digit) {
 function handleOperator(nextOperator) {
     const inputValue = parseFloat(displayValue);
 
+    // Handle consecutive operator presses
+    if (lastButtonWasOperator) {
+        operator = nextOperator;
+        return;
+    }
+
     if (firstNumber === '') {
         firstNumber = inputValue;
     } else if (operator) {
-        const result = operate(operator, firstNumber, inputValue);
-        displayValue = String(result);
+        // Only evaluate if we have both numbers and an operator
+        const result = operate(operator, parseFloat(firstNumber), inputValue);
+        if (result === "Nice try! 🙄") {
+            displayValue = result;
+            clearCalculator();
+            updateDisplay();
+            return;
+        }
+        displayValue = result;
         firstNumber = result;
         updateDisplay();
     }
 
     newNumberFlag = true;
     operator = nextOperator;
+    lastButtonWasOperator = true;
 }
 
 // Function to handle equals
 function handleEquals() {
-    if (firstNumber === '' || !operator) return;
+    // Don't evaluate if we're missing any required parts
+    if (firstNumber === '' || !operator || lastButtonWasOperator) return;
 
     const inputValue = parseFloat(displayValue);
-    const result = operate(operator, firstNumber, inputValue);
+    const result = operate(operator, parseFloat(firstNumber), inputValue);
     
-    displayValue = String(result);
+    if (result === "Nice try! 🙄") {
+        displayValue = result;
+        clearCalculator();
+        updateDisplay();
+        return;
+    }
+
+    displayValue = result;
     updateDisplay();
 
-    // Reset everything
+    // Reset everything except the display value
     firstNumber = '';
     operator = '';
     newNumberFlag = true;
+    lastButtonWasOperator = false;
 }
 
 // Function to clear calculator
@@ -96,8 +139,8 @@ function clearCalculator() {
     displayValue = '0';
     firstNumber = '';
     operator = '';
-    secondNumber = '';
     newNumberFlag = false;
+    lastButtonWasOperator = false;
     updateDisplay();
 }
 
