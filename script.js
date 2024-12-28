@@ -38,11 +38,3 @@ function operate(operator, a, b) {
             return "Error: Invalid operator";
     }
 }
-
-// Test functions
-console.log("Testing calculator functions:");
-console.log("Addition: 5 + 3 =", operate('+', 5, 3));
-console.log("Subtraction: 10 - 4 =", operate('-', 10, 4));
-console.log("Multiplication: 6 * 7 =", operate('*', 6, 7));
-console.log("Division: 15 / 3 =", operate('/', 15, 3));
-console.log("Division by zero:", operate('/', 5, 0));
